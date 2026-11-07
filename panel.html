@@ -2,6 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="utf-8">
+<meta name="panel-surum" content="16">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex">
 <title>Kürsüden Gönüllere Hutbe Paneli</title>
@@ -130,11 +131,30 @@ header.top p{margin:0;color:var(--muted);font-size:.95rem}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 @media (max-width:560px){.blk{grid-template-columns:minmax(0,1fr) auto}.blk textarea{grid-column:1/-1;grid-row:2}}
 .blk textarea{overflow:hidden}
-.aw{display:inline-block;vertical-align:middle;background:currentColor;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}
+.aw{display:inline-block;vertical-align:middle;background:currentColor;background:color-mix(in srgb,var(--arc,currentColor) var(--ark,100%),#fff);-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}
 .h-ar.img{line-height:1.45}
 .blk .aiv{grid-column:1/-1;margin:0;font-size:22px;padding:.3em .5em}
 .blk .aim{grid-column:1/-1;margin:0;font:500 .78rem var(--f-ui);color:var(--muted)}.blk .aix{margin-inline-start:6px;min-height:32px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font:700 .75rem var(--f-ui);cursor:pointer}
 .blk .aim.ok{color:var(--ayet);font-weight:700}
+.meta label{min-width:0}.meta input{width:100%;min-width:0;box-sizing:border-box}
+.dpk{display:flex;flex-wrap:wrap;align-items:center;gap:6px;min-width:0;font:600 .75rem var(--f-ui);color:var(--muted)}
+.meta .dpk input{min-height:34px;flex:1;min-width:0;font-size:.85rem}
+:root{--ark:100%}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ark:45%}}
+:root[data-theme="dark"]{--ark:45%}
+.arcm{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.arcm .ai{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--bg)}
+.arcm .ai .tx{flex:1;min-width:0;display:grid;gap:2px}.arcm .ai b{font:800 .95rem var(--f-tx)}.arcm .ai small{font:600 .75rem var(--f-ui);color:var(--muted)}
+.arcm .ai .cur{font:800 .72rem var(--f-ui);color:var(--ayet)}
+.arcm .ai button{min-height:38px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font:800 .78rem var(--f-ui);padding:0 12px;cursor:pointer}
+.arcm .ai .del{color:#c0392b}.arcm .ai .yes{background:#c0392b;border-color:#c0392b;color:#fff}
+.tkh{margin-top:10px;padding:12px 14px;border-radius:14px;background:var(--bg);border:1px solid var(--line);font:500 .9rem/1.5 var(--f-ui)}
+.tkh p{margin:0 0 8px}.tkh ol{margin:0 0 8px;padding-left:1.3em;display:grid;gap:8px}
+.tkv{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:4px}
+.tkv code,.tkv a{font:600 .85rem ui-monospace,monospace;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:4px 8px;word-break:break-all;color:var(--ink)}
+.tkv a{color:var(--hadis,#2148a6)}
+.tkv button{min-height:34px;border-radius:9px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font:800 .78rem var(--f-ui);padding:0 10px;cursor:pointer}
+#tokH{margin-top:8px}
 </style>
 
 <style>[hidden]{display:none!important}body{margin:0}</style>
@@ -176,11 +196,12 @@ header.top p{margin:0;color:var(--muted);font-size:.95rem}
         <input type="file" id="pdf" accept="application/pdf,.pdf">
       </label>
       <p class="status" id="status" aria-live="polite">Henüz hutbe yüklenmedi. Bu haftanın hutbe PDF'ini seçin.</p>
+      <p class="status" id="tsk" hidden>Yarım kalan bir taslak var: <b id="tskT"></b> <button type="button" class="btn" id="tskA" style="min-height:36px;margin-left:6px">Taslağı aç</button> <button type="button" class="btn" id="tskD" style="min-height:36px">Sil</button></p>
 
       <h2 style="margin-top:18px">2 · Kontrol et ve düzelt</h2>
       <div class="meta">
         <label for="m-title">Başlık<input id="m-title" type="text"></label>
-        <label for="m-date">Tarih<input id="m-date" type="text" placeholder="7 Kasım 2026"></label>
+        <label for="m-date">Tarih<input id="m-date" type="text" placeholder="7 Kasım 2026"><span class="dpk">Takvimden seç: <input id="m-dp" type="date" aria-label="Takvimden tarih seç"></span></label>
       </div>
       <div class="blocks" id="blocks"></div>
       <div class="row">
@@ -198,10 +219,31 @@ header.top p{margin:0;color:var(--muted);font-size:.95rem}
         <label for="tok" style="display:grid;gap:4px;font:700 .8rem var(--f-ui);color:var(--muted)">GitHub erişim anahtarı (github_pat_…)
           <input id="tok" type="password" autocomplete="off" style="min-height:40px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:500 15px var(--f-ui);padding:0 10px">
         </label>
-        <div class="row"><button type="button" class="btn" id="tokS">Kaydet</button><button type="button" class="btn" id="tokD">Bu cihazdan sil</button></div>
-        <p class="note">Anahtar yalnızca bu cihazın tarayıcısında saklanır. Başka bir cihazda gönderecekseniz orada da bir kez girin.</p>
+        <div class="row"><button type="button" class="btn" id="tokS">Kaydet</button><button type="button" class="btn" id="tokG">Göster</button><button type="button" class="btn" id="tokC">Anahtarı kopyala</button><button type="button" class="btn" id="tokD">Bu cihazdan sil</button></div>
+        <p class="status" id="tokSt" aria-live="polite"></p>
+        <p class="note">Anahtar yalnızca bu cihazda saklanır. <b>Anahtarı kopyala</b> ile alıp telefonunuzun şifre yöneticisine (ör. Google Şifre Yöneticisi) "GitHub panel anahtarı" adıyla kaydedin; yeni bir telefonda oradan yapıştırırsınız.</p>
+        <button type="button" class="btn" id="tokH" aria-expanded="false">Anahtarım yok / unuttum</button>
+        <div class="tkh" id="tkh" hidden>
+          <p><b>Yeni anahtar 1 dakikada oluşturulur.</b> Unutmak bir şey kaybettirmez: hutbeler, duyurular ve giriş şifresi olduğu gibi kalır.</p>
+          <ol>
+            <li>GitHub'a giriş yapın ve anahtar sayfasını açın:<span class="tkv"><a id="tkLink" href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com/settings/personal-access-tokens/new</a><button type="button" data-c="https://github.com/settings/personal-access-tokens/new">Kopyala</button></span></li>
+            <li><b>Token name</b> kutusuna yazın:<span class="tkv"><code>panel</code><button type="button" data-c="panel">Kopyala</button></span></li>
+            <li><b>Expiration</b>: en uzun süreyi (1 yıl) seçin.</li>
+            <li><b>Repository access</b>: <i>Only select repositories</i> seçin, listeden bu depoyu seçin:<span class="tkv"><code>dinibilgiler/kursuden-icerik</code><button type="button" data-c="kursuden-icerik">Kopyala</button></span></li>
+            <li><b>Permissions</b> bölümünde <b>Contents</b> satırını bulun ve <b>Read and write</b> yapın.</li>
+            <li>En alttaki <b>Generate token</b>'a basın. Çıkan <code>github_pat_…</code> kodunu kopyalayın (yalnızca bir kez gösterilir).</li>
+            <li>Bu sayfaya dönüp yukarıdaki kutuya yapıştırın ve <b>Kaydet</b>'e basın.</li>
+            <li>İsterseniz GitHub'daki eski anahtarı <b>Delete</b> ile silin.</li>
+          </ol>
+          <p class="note">Anahtarın süresi dolduğunda da aynı adımlarla yenisini oluşturun. <span id="tkAge"></span></p>
+        </div>
       </div>
       <p class="note">Gönderince hutbe bütün kullanıcılara gider: uygulama internete bağlandığında yeni hutbeyi alır, sonra internetsiz de okunur. Önceki hutbeler <b>arsiv</b> klasöründe saklanır.</p>
+      <h2 style="margin-top:26px" id="arcMgr">Geçmiş hutbeler</h2>
+      <p class="note">Uygulamadaki "Geçmiş hutbeler" listesi. Yanlış ya da gereksiz bir hutbeyi buradan silebilirsiniz; uygulamadan da kalkar. Bu haftanın hutbesi silinemez.</p>
+      <div class="row"><button type="button" class="btn" id="arcLd">Listeyi getir</button></div>
+      <div id="arcL" class="arcm"></div>
+      <p class="status" id="arcSt" aria-live="polite"></p>
       <h2 style="margin-top:26px">Duyuru</h2>
       <p class="note">Uygulamayı açan herkese ana sayfanın köşesinde küçük bir kutuda bir kez gösterilir (ör. "Lütfen uygulamayı güncelleyin").</p>
       <label for="d-txt" style="display:grid;gap:4px;font:700 .8rem var(--f-ui);color:var(--muted)">Duyuru metni (en çok 200 harf)
@@ -222,7 +264,7 @@ header.top p{margin:0;color:var(--muted);font-size:.95rem}
       <div class="row"><button type="button" class="btn" id="v-pub">Sürümü bildir</button></div>
       <p class="status" id="v-st" aria-live="polite"></p>
       <h2 style="margin-top:26px">Uygulama giriş şifresi</h2>
-      <p class="note">Uygulamada en alttaki "Sürüm 9.2" yazısına 3 kez dokununca bu şifre sorulur; doğru girilirse bu panel açılır. Şifrenin kendisi kaydedilmez, yalnızca çözülemeyen bir özeti kaydedilir.</p>
+      <p class="note">Uygulamada en alttaki "Sürüm 9.3" yazısına 3 kez dokununca bu şifre sorulur; doğru girilirse bu panel açılır. Şifrenin kendisi kaydedilmez, yalnızca çözülemeyen bir özeti kaydedilir.</p>
       <div class="meta">
         <label for="g-p1">Yeni şifre<input id="g-p1" type="password" autocomplete="new-password" minlength="6"></label>
         <label for="g-p2">Yeni şifre (tekrar)<input id="g-p2" type="password" autocomplete="new-password"></label>
@@ -263,7 +305,8 @@ header.top p{margin:0;color:var(--muted);font-size:.95rem}
 
   // ---- boş başlangıç: hutbe PDF'i yüklenince dolar ----
   var H={ornek:true,title:'',date:'',blocks:[]};
-  try{var saved=JSON.parse(ld('hp_taslak','null'));if(saved&&saved.blocks&&!saved.ornek&&saved.title!=='Kardeşlik Hukuku')H=saved;else localStorage.removeItem('hp_taslak')}catch(e){}
+  // Panel her açılışta boş başlar; eski taslak yalnızca istenirse açılır
+  var saved=null;try{saved=JSON.parse(ld('hp_taslak','null'));if(!(saved&&saved.blocks&&saved.blocks.length&&!saved.ornek&&saved.title!=='Kardeşlik Hukuku')){saved=null;localStorage.removeItem('hp_taslak')}}catch(e){saved=null}
 
   // ---- telefon görünümü ----
   var view=$('#view');
@@ -336,7 +379,7 @@ header.top p{margin:0;color:var(--muted);font-size:.95rem}
       var opts=Object.keys(TYPES).map(function(k){return '<option value="'+k+'"'+(k===b[0]?' selected':'')+'>'+TYPES[k]+'</option>'}).join('');
       d.innerHTML='<select id="bt'+i+'" aria-label="Bölüm türü">'+opts+'</select><textarea id="bx'+i+'" aria-label="Metin" class="'+(b[0]==='ar'?'ar':'')+'"></textarea><button type="button" class="rm" aria-label="Sil">×</button>';
       if(b[0]==='ar'&&b[3]&&b[3].v)d.insertAdjacentHTML('beforeend','<p class="aim ok">✓ Kur\'an metniyle doğrulandı ('+esc(b[3].v)+')</p>');
-      if(b[0]==='ar'&&b[3]&&b[3].im)d.insertAdjacentHTML('beforeend','<div class="aiv h-ar img" dir="rtl">'+arImg(b,'e'+i)+'</div><p class="aim">Arapça, PDF\'teki görünüşüyle gösterilir (harekeler bozulmasın diye). <button type="button" class="aix">Görüntü yerine yazıyı kullan</button></p>');
+      if(b[0]==='ar'&&b[3]&&b[3].im)d.insertAdjacentHTML('beforeend','<div class="aiv h-ar img" dir="rtl">'+arImg(b,'e'+i)+'</div><p class="aim">Arapça, hutbe PDF\'indeki orijinal görünüşüyle gösterilir. <button type="button" class="aix">Görüntü yerine yazıyı kullan</button></p>');
       var ta=d.querySelector('textarea');ta.value=b[1];
       d.querySelector('select').onchange=function(e){b[0]=e.target.value;d.dataset.t=b[0];ta.className=b[0]==='ar'?'ar':'';H.ornek=false;render();save()};
       ta.oninput=function(){b[1]=ta.value;if(Array.isArray(b[2]))b[2]=b[2].filter(function(f){return f.e<=b[1].length});H.ornek=false;render();save()};
@@ -348,6 +391,8 @@ header.top p{margin:0;color:var(--muted);font-size:.95rem}
   }
   $('#m-title').oninput=function(e){H.title=e.target.value;render();save()};
   $('#m-date').oninput=function(e){H.date=e.target.value;render();save()};
+  $('#m-dp').onchange=function(e){var v=e.target.value;if(!v)return;var p=v.split('-'),AY=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+    H.date=(+p[2])+' '+AY[+p[1]-1]+' '+p[0];$('#m-date').value=H.date;render();save()};
   $('#add').onclick=function(){H.blocks.push(['p',''] );edit();render();list.lastChild.querySelector('textarea').focus()};
 
   // ---- PDF okuma ----
@@ -360,7 +405,7 @@ header.top p{margin:0;color:var(--muted);font-size:.95rem}
   function tcase(t){return t.toLocaleLowerCase('tr').replace(/(^|[\s(“"'’-])(\S)/g,function(_,a,c){return a+c.toLocaleUpperCase('tr')}).replace(/(\S\s)(Ve|İle|Ya|Da|De|Ki|Veya|İçin)(?=\s)/g,function(_,a,w){return a+w.toLocaleLowerCase('tr')})}
   // ---- Arapça satırları PDF'teki görünüşüyle al (metin çıkarımı harekeleri bozuyor) ----
   async function arCapture(pg,rows){
-    var S=3.5,vp=pg.getViewport({scale:S}),cv=document.createElement('canvas');cv.width=Math.ceil(vp.width);cv.height=Math.ceil(vp.height);
+    var S=5,vp=pg.getViewport({scale:S}),cv=document.createElement('canvas');cv.width=Math.ceil(vp.width);cv.height=Math.ceil(vp.height);
     var cx=cv.getContext('2d',{willReadFrequently:true});
     await pg.render({canvasContext:cx,viewport:vp,background:'rgba(0,0,0,0)'}).promise;
     var out=[];
@@ -376,6 +421,9 @@ header.top p{margin:0;color:var(--muted);font-size:.95rem}
       var d=cx.getImageData(X,Y,W,Hh).data,ink=new Float32Array(W*Hh),mx=0;
       for(var p=0,q=0;q<W*Hh;q++,p+=4){var al=d[p+3]/255,lum=.299*d[p]+.587*d[p+1]+.114*d[p+2],v=al*(255-lum);ink[q]=v;if(v>mx)mx=v}
       if(mx<30){out.push(null);return}
+      // PDF'teki asıl yazı rengi (Diyanet genelde mavi kullanır)
+      var cr=0,cg=0,cb=0,cn=0;for(var p2=0,q2=0;q2<W*Hh;q2++,p2+=4){if(d[p2+3]>200&&ink[q2]>mx*.7){cr+=d[p2];cg+=d[p2+1];cb+=d[p2+2];cn++}}
+      var hex=cn>20?'#'+[cr,cg,cb].map(function(v){return('0'+Math.round(v/cn).toString(16)).slice(-2)}).join(''):'';
       var full=Math.round((ASC+DSC)*sz*S),off=Math.round((ASC*sz-(top-r.y))*S);
       // yatay kırp
       var col=new Uint8Array(W),thr=mx*.18;
@@ -394,7 +442,7 @@ header.top p{margin:0;color:var(--muted);font-size:.95rem}
         ks.push([s,e])}
       var k=ks.map(function(c,ci){var nx2=ks[ci+1];var s0=Math.max(0,c[0]-2),e0=Math.min(w-1,c[1]+2);
         return [+(s0/E).toFixed(3),+((e0-s0+1)/E).toFixed(3),nx2?+(Math.max(0,s0-Math.min(w-1,nx2[1]+2)-1)/E).toFixed(3):0]});
-      out.push({u:oc.toDataURL('image/png'),w:+(w/E).toFixed(3),h:+((ASC+DSC)).toFixed(3),k:k});
+      out.push({c:hex,u:oc.toDataURL('image/png'),w:+(w/E).toFixed(3),h:+((ASC+DSC)).toFixed(3),k:k});
     });
     return out;
   }
@@ -403,7 +451,7 @@ header.top p{margin:0;color:var(--muted);font-size:.95rem}
     var m=b[3]&&b[3].im;if(!m||!m.length)return '';
     var css='',h='';
     m.forEach(function(L,li){
-      var id='ai'+i+'_'+li;css+='.'+id+'{-webkit-mask-image:url('+L.u+');mask-image:url('+L.u+');-webkit-mask-size:'+L.w+'em '+L.h+'em;mask-size:'+L.w+'em '+L.h+'em}';
+      var id='ai'+i+'_'+li;css+='.'+id+'{'+(L.c&&/^#[0-9a-f]{6}$/i.test(L.c)?'--arc:'+L.c+';':'')+'-webkit-mask-image:url('+L.u+');mask-image:url('+L.u+');-webkit-mask-size:'+L.w+'em '+L.h+'em;mask-size:'+L.w+'em '+L.h+'em}';
       L.k.forEach(function(c,ci){
         var g=ci===0?(li===0?0:.32):L.k[ci-1][2];
         h+=(h?'​':'')+'<span class="aw '+id+'" style="width:'+c[1]+'em;height:'+L.h+'em;margin-right:'+g+'em;-webkit-mask-position:'+(-c[0])+'em 0;mask-position:'+(-c[0])+'em 0"></span>';
@@ -498,8 +546,8 @@ header.top p{margin:0;color:var(--muted);font-size:.95rem}
           pr.push({t:txt,y:r.y,sz:r.sz,pg:p,col:r.col,ind:!ar&&left[r.col]!=null&&r.minX>left[r.col]+8,ar:ar,x0:r.minX,x1:r.maxX});
         });
         var g=0,arr=[];
-        pr.forEach(function(L,k){if(!L.ar||/^\uFDFD$/.test(L.t))return;var P=pr[k-1];
-          if(!(P&&P.grp!=null&&P.col===L.col&&P.y-L.y<2.7*L.sz)||/[.۔]$/.test(P.t)||/^\s*و?َ?\s*قَ?ا?لَ?/.test(L.t)&&/^[وق]/.test(L.t)&&/قَ?ا?لَ?\s*رَ?سُ?و?لُ?/.test(L.t))g++;L.grp=g;arr.push(L)});
+        pr.forEach(function(L,k){if(!L.ar)return;var P=pr[k-1];
+          if(!(P&&P.grp!=null&&P.col===L.col&&P.y-L.y<2.7*L.sz)||/[.۔]$/.test(P.t)||(/^\s*(\uFDFD|بِسْمِ)/.test(P.t)&&P.t.length<50)||/^\s*و?َ?\s*قَ?ا?لَ?/.test(L.t)&&/^[وق]/.test(L.t)&&/قَ?ا?لَ?\s*رَ?سُ?و?لُ?/.test(L.t))g++;L.grp=g;arr.push(L)});
         if(arr.length){try{var ims=await arCapture(pg,arr);arr.forEach(function(L,k){L.im=ims[k]})}catch(e){console.warn(e)}}
         var last=null;
         pr.forEach(function(L){
@@ -541,7 +589,7 @@ header.top p{margin:0;color:var(--muted);font-size:.95rem}
     for(var i=0;i<lines.length;i++){
       var L=lines[i],prev=lines[i-1],ar=arRatio(L.t)>.5;
       if(/^\d{1,2}$/.test(L.t))continue;                         // sayfa numarası
-      if(/^\uFDFD$/.test(L.t.trim())){paras.push(['ar','\uFDFD']);cur=null;continue}
+      if(/^\uFDFD$/.test(L.t.trim())&&!(L.ims&&L.ims[0])){paras.push(['ar','\uFDFD']);cur=null;continue}
       var small=L.sz<body*.85,sub=!ar&&caps(L.t)&&L.t.split(/\s+/).length<=6,t=ar?'ar':small?'src':(HITAP.test(L.t)||sub)?'hitap':'p';
       var gap=!prev?999:prev.pg!==L.pg||prev.col!==L.col?0:(prev.y-L.y);
       var hasIm=L.ims&&L.ims.length&&L.ims.every(function(x){return x});
@@ -571,7 +619,6 @@ header.top p{margin:0;color:var(--muted);font-size:.95rem}
     var n={ar:0,meal:0,hitap:0};paras.forEach(function(b){if(n[b[0]]!=null)n[b[0]]++});
     say('Okundu: '+paras.length+' bölüm ('+n.ar+' Arapça, '+n.meal+' alıntı, '+n.hitap+' hitap). Türleri ve metni kontrol edin.');
     show('tel');
-    verifyAr();
   }
   var inp=$('#pdf'),drop=$('#drop');
   inp.onchange=function(){if(inp.files[0])readPdf(inp.files[0]);inp.value=''};
@@ -626,8 +673,77 @@ header.top p{margin:0;color:var(--muted);font-size:.95rem}
   var pst=$('#pst');function psay(t,err){pst.textContent=t;pst.classList.toggle('err',!!err)}
   function tok(){var t=ld('hp_token','');if(!t){var i=document.getElementById('tok'),v=i&&i.value.trim();if(v&&/^(github_pat_|ghp_)/.test(v)){sv('hp_token',v);t=v}}return t}
   $('#tokB').onclick=function(){var b=$('#tokBox');b.hidden=!b.hidden;$('#tok').value=tok()};
-  $('#tokS').onclick=function(){sv('hp_token',$('#tok').value.trim());$('#tokBox').hidden=true;psay('Anahtar kaydedildi.')};
-  $('#tokD').onclick=function(){try{localStorage.removeItem('hp_token')}catch(e){}$('#tok').value='';psay('Anahtar bu cihazdan silindi.')};
+  if(saved){$('#tsk').hidden=false;$('#tskT').textContent=saved.title||'Başlıksız';
+    $('#tskA').onclick=function(){H=saved;$('#tsk').hidden=true;$('#m-title').value=H.title||'';$('#m-date').value=H.date||'';edit();render();say('Taslak açıldı. PDF\'i yeniden seçerseniz yerine yenisi gelir.')};
+    $('#tskD').onclick=function(){try{localStorage.removeItem('hp_taslak')}catch(e){}saved=null;$('#tsk').hidden=true}}
+  // ---- geçmiş hutbeleri yönet (sil) ----
+  var ARL=[],ARSHA=null,CURID=null;
+  function arcSay(t,e){var x=$('#arcSt');x.textContent=t;x.classList.toggle('err',!!e)}
+  function arcDraw(){
+    var h='';ARL.forEach(function(x,k){var cur=CURID&&x.id===CURID;
+      h+='<div class="ai" data-k="'+k+'"><span class="tx"><b>'+esc(x.title||x.f)+'</b><small>'+esc(x.date||'')+' · '+esc(x.f)+'</small></span>'+
+        (cur?'<span class="cur">Bu hafta</span>':'<button type="button" class="del">Sil</button>')+'</div>'});
+    $('#arcL').innerHTML=h||'<p class="note">Arşivde hutbe yok.</p>';
+    $('#arcL').querySelectorAll('.ai').forEach(function(d){var b=d.querySelector('.del');if(!b)return;
+      b.onclick=function(){if(d.querySelector('.yes'))return;b.hidden=true;d.insertAdjacentHTML('beforeend','<button type="button" class="yes">Evet, sil</button><button type="button" class="no">Vazgeç</button>');
+        d.querySelector('.no').onclick=function(){arcDraw()};
+        d.querySelector('.yes').onclick=function(){arcDel(+d.dataset.k)}}});
+  }
+  async function arcLoad(){
+    if(!tok()){$('#tokBox').hidden=false;arcSay('Önce erişim anahtarını girin.',true);return}
+    arcSay('Liste alınıyor…');
+    try{
+      var g=await gh('hutbe/arsiv/index.json');ARL=[];ARSHA=null;
+      if(g.ok&&g.j.content){ARSHA=g.j.sha;try{ARL=JSON.parse(ub64(g.j.content))||[]}catch(e){ARL=[]}}
+      else if(g.st===401){arcSay('Erişim anahtarı geçersiz.',true);return}
+      var have={};ARL.forEach(function(x){have[x.f]=1});
+      var d=await gh('hutbe/arsiv');
+      if(d.ok&&Array.isArray(d.j))for(var it of d.j){if(!/\.json$/.test(it.name)||it.name==='index.json'||have[it.name])continue;
+        try{var r=await gh('hutbe/arsiv/'+it.name);var j=JSON.parse(ub64(r.j.content));ARL.push({f:it.name,id:j.id||it.name,title:j.title||'',date:j.date||''})}catch(e){}}
+      var sj=await gh('hutbe/son.json');CURID=null;if(sj.ok&&sj.j.content){try{CURID=JSON.parse(ub64(sj.j.content)).id}catch(e){}}
+      arcDraw();arcSay(ARL.length+' hutbe');
+    }catch(e){arcSay('Liste alınamadı. İnternet bağlantısını kontrol edin.',true)}
+  }
+  async function arcDel(k){
+    var x=ARL[k];if(!x)return;arcSay('Siliniyor…');
+    try{
+      var g=await gh('hutbe/arsiv/'+x.f);
+      if(g.ok&&g.j.sha){var r=await gh('hutbe/arsiv/'+x.f,'DELETE',{message:'Arşivden sil: '+(x.title||x.f),sha:g.j.sha});if(!r.ok&&r.st!==404)throw r}
+      ARL.splice(k,1);
+      await put('hutbe/arsiv/index.json',JSON.stringify(ARL),'Arşiv listesi');
+      arcDraw();arcSay('Silindi. Uygulamada birkaç dakika içinde listeden kalkar.');
+    }catch(e){arcSay(e&&e.st===401?'Erişim anahtarı geçersiz.':'Silinemedi. Tekrar deneyin.',true);arcDraw()}
+  }
+  $('#arcLd').onclick=arcLoad;
+  function tsay(t,e){var x=$('#tokSt');x.textContent=t;x.classList.toggle('err',!!e)}
+  function copyTxt(t,ok){
+    function fb(){var a=document.createElement('textarea');a.value=t;a.setAttribute('readonly','');a.style.cssText='position:fixed;top:0;left:0;opacity:0';document.body.appendChild(a);a.select();a.setSelectionRange(0,t.length);var r=false;try{r=document.execCommand('copy')}catch(e){}a.remove();ok(r)}
+    try{if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(t).then(function(){ok(true)},fb);return}}catch(e){}fb();
+  }
+  function tkAge(){var t=+ld('hp_tok_t','0'),x=$('#tkAge');if(!x)return;if(!t){x.textContent='';return}
+    var d=new Date(t),e=new Date(t);e.setFullYear(e.getFullYear()+1);var AY=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+    x.textContent='Bu cihaza anahtar '+d.getDate()+' '+AY[d.getMonth()]+' '+d.getFullYear()+' tarihinde kaydedildi; 1 yıllık seçtiyseniz '+e.getDate()+' '+AY[e.getMonth()]+' '+e.getFullYear()+' civarında yenileyin.'}
+  $('#tokS').onclick=function(){var v=$('#tok').value.trim();if(!v){tsay('Önce anahtarı kutuya yapıştırın.',true);return}
+    if(!/^(github_pat_|ghp_)/.test(v)){tsay('Bu bir GitHub anahtarına benzemiyor. "github_pat_" ile başlamalı.',true);return}
+    sv('hp_token',v);sv('hp_tok_t',String(Date.now()));tkAge();setTimeout(selfSync,300);$('#tok').type='password';$('#tokG').textContent='Göster';$('#tokBox').hidden=true;psay('Anahtar kaydedildi.')};
+  $('#tokD').onclick=function(){try{localStorage.removeItem('hp_token');localStorage.removeItem('hp_tok_t')}catch(e){}$('#tok').value='';tkAge();tsay('Anahtar bu cihazdan silindi.')};
+  $('#tokG').onclick=function(){var i=$('#tok'),sh=i.type==='password';i.type=sh?'text':'password';this.textContent=sh?'Gizle':'Göster'};
+  $('#tokC').onclick=function(){var v=$('#tok').value.trim()||tok();if(!v){tsay('Kopyalanacak anahtar yok. Önce anahtarı girin.',true);return}
+    copyTxt(v,function(ok){tsay(ok?'Anahtar kopyalandı. Şifre yöneticinize yapıştırıp kaydedin.':'Kopyalanamadı. "Göster"e basıp kodu elle seçin.',!ok)})};
+  // ---- uygulamanın içindeki panel, GitHub'daki panel.html'i kendiliğinden günceller (elle yüklemeye gerek kalmaz) ----
+  function pver(t){var m=/name="panel-surum" content="(\d+)"/.exec(t||'');return m?+m[1]:0}
+  async function selfSync(){
+    var src=window.__PANEL_SRC;if(!src||!tok())return;
+    try{var mv=pver(src),g=await gh('panel.html'),rv=0;
+      if(g.ok&&g.j.content){try{rv=pver(ub64(g.j.content))}catch(e){}}
+      if(rv>=mv)return;
+      var body={message:'Panel sürüm '+mv+' (uygulamadan otomatik)',content:b64(src)};if(g.ok&&g.j.sha)body.sha=g.j.sha;
+      var r=await gh('panel.html','PUT',body);if(r.ok)tsay('Tarayıcıdaki panel de en son sürüme güncellendi.')}catch(e){}
+  }
+  setTimeout(selfSync,2500);
+  $('#tokH').onclick=function(){var h=$('#tkh');h.hidden=!h.hidden;this.setAttribute('aria-expanded',String(!h.hidden));tkAge()};
+  $('#tkh').addEventListener('click',function(e){var b=e.target.closest('button[data-c]');if(!b)return;var t0=b.textContent;
+    copyTxt(b.dataset.c,function(ok){b.textContent=ok?'Kopyalandı':'Olmadı';setTimeout(function(){b.textContent=t0},1500)})});
   function b64(str){return btoa(unescape(encodeURIComponent(str)))}
   function gh(path,method,body){
     return fetch(API+path,{method:method||'GET',headers:{'Authorization':'Bearer '+tok(),'Accept':'application/vnd.github+json'},body:body?JSON.stringify(body):undefined})
@@ -663,7 +779,7 @@ header.top p{margin:0;color:var(--muted);font-size:.95rem}
     var btn=$('#pub');btn.disabled=true;psay('Gönderiliyor…');
     var gun=id.slice(0,10);
     put('hutbe/son.json',J,'Hutbe: '+H.title)
-      .then(function(){var f=gun+'-'+slug(H.title)+'.json';return put('hutbe/arsiv/'+f,J,'Arşiv: '+H.title).then(function(){return arcIndex({f:f,id:id,title:H.title,date:H.date||''})}).catch(function(){})})
+      .then(function(){var f=gun+'-'+slug(H.title)+'.json';return put('hutbe/arsiv/'+f,J,'Arşiv: '+H.title).then(function(){var tw=0,aw=0;H.blocks.forEach(function(b){var n=(b[1]||'').split(/\s+/).filter(Boolean).length;if(b[0]==='ar')aw+=n;else if(b[0]!=='src')tw+=n});return arcIndex({f:f,id:id,title:H.title,date:H.date||'',dk:Math.max(1,Math.round(tw/110+aw/60))})}).catch(function(){})})
       .then(function(){psay('Gönderildi. Telefonlarda birkaç dakika içinde görünür.')})
       .catch(function(r){
         var st=r&&r.st;
