@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="utf-8">
-<meta name="panel-surum" content="16">
+<meta name="panel-surum" content="17">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex">
 <title>Kürsüden Gönüllere Hutbe Paneli</title>
@@ -520,6 +520,12 @@ header.top p{margin:0;color:var(--muted);font-size:.95rem}
       var lines=[];
       for(var p=1;p<=doc.numPages;p++){
         var pg=await doc.getPage(p),tc=await pg.getTextContent(),rows={},W=(pg.view&&pg.view[2])||595;
+        // kalın yazı tespiti: yazı tipi adında Bold/Black geçen parçalar
+        try{await pg.getOperatorList()}catch(e){}
+        var BF={};function isB(fn){if(fn in BF)return BF[fn];var b=false;
+          try{var f=pg.commonObjs.get(fn);b=/bold|black|heavy|semibold|demi/i.test((f&&f.name)||'')||!!(f&&(f.bold||f.black))}catch(e){}
+          if(!b){var st=tc.styles&&tc.styles[fn];b=!!(st&&/bold/i.test(st.fontFamily||''))}
+          return BF[fn]=b}
         var its=tc.items.filter(function(it){return it.str&&it.str.trim()});
         // iki sütun mu? (Diyanet hutbeleri iki sütunludur)
         var L0=its.filter(function(it){return it.transform[4]+(it.width||0)<W*.53}).length,R0=its.filter(function(it){return it.transform[4]>W*.47}).length;
@@ -527,7 +533,7 @@ header.top p{margin:0;color:var(--muted);font-size:.95rem}
         its.forEach(function(it){
           var x=it.transform[4],col=two&&x>=W*.49?1:0,y=Math.round(it.transform[5]/2)*2,sz=Math.hypot(it.transform[0],it.transform[1]),k=col+':'+y;
           var r=rows[k]=rows[k]||{y:y,col:col,sz:0,its:[],minX:1e9,maxX:-1e9};
-          r.its.push({x:x,s:it.str,w:it.width||0});r.sz=Math.max(r.sz,sz);r.minX=Math.min(r.minX,x);r.maxX=Math.max(r.maxX,x+(it.width||0));
+          r.its.push({x:x,s:it.str,w:it.width||0,b:isB(it.fontName)});r.sz=Math.max(r.sz,sz);r.minX=Math.min(r.minX,x);r.maxX=Math.max(r.maxX,x+(it.width||0));
         });
         var R=Object.keys(rows).map(function(k){return rows[k]}).sort(function(a,b){return a.col-b.col||b.y-a.y});
         var left={};R.forEach(function(r){var t=r.its.map(function(i){return i.s}).join('');if(arRatio(t)<.5)left[r.col]=Math.min(left[r.col]==null?1e9:left[r.col],r.minX)});
@@ -540,10 +546,13 @@ header.top p{margin:0;color:var(--muted);font-size:.95rem}
         R.forEach(function(r){
           // PDF bir kelimeyi birkaç parçaya bölebilir ("BİR"+"LİK"): yalnızca gerçek boşlukta ayır
           var srt=r.its.slice().sort(function(a,b){return a.x-b.x}),txt='',pe=null;
-          srt.forEach(function(i){if(pe!=null&&txt&&!/\s$/.test(txt)&&!/^\s/.test(i.s)&&i.x-pe>.18*r.sz)txt+=' ';txt+=i.s;pe=i.x+i.w});
+          var bru=[],bc=null;
+          srt.forEach(function(i,n){if(pe!=null&&txt&&!/\s$/.test(txt)&&!/^\s/.test(i.s)&&i.x-pe>.18*r.sz){txt+=' ';if(bc)bc.t+=' '}txt+=i.s;pe=i.x+i.w;
+            if(i.b&&i.s.trim()){if(!bc){bc={t:'',st:!txt.slice(0,txt.length-i.s.length).trim()};bru.push(bc)}bc.t+=i.s;bc.en=n===srt.length-1}
+            else if(i.s.trim())bc=null});
           txt=txt.replace(/\s+/g,' ').trim();var ar=arRatio(txt)>0.5;
           if(ar)txt=r.its.sort(function(a,b){return b.x-a.x}).map(function(i){return i.s}).join(' ').replace(/\s+/g,' ').replace(/\s+([\u064B-\u0670\u065F\u06D6-\u06ED])/g,'$1').trim();
-          pr.push({t:txt,y:r.y,sz:r.sz,pg:p,col:r.col,ind:!ar&&left[r.col]!=null&&r.minX>left[r.col]+8,ar:ar,x0:r.minX,x1:r.maxX});
+          pr.push({t:txt,y:r.y,sz:r.sz,pg:p,col:r.col,ind:!ar&&left[r.col]!=null&&r.minX>left[r.col]+8,ar:ar,x0:r.minX,x1:r.maxX,bru:ar?[]:bru});
         });
         var g=0,arr=[];
         pr.forEach(function(L,k){if(!L.ar)return;var P=pr[k-1];
@@ -552,7 +561,7 @@ header.top p{margin:0;color:var(--muted);font-size:.95rem}
         var last=null;
         pr.forEach(function(L){
           if(L.grp!=null&&last&&last.grp===L.grp){last.t+=' '+L.t;last.ims.push(L.im||null);return}
-          var o={t:L.t,y:L.y,sz:L.sz,pg:L.pg,col:L.col,ind:L.ind};
+          var o={t:L.t,y:L.y,sz:L.sz,pg:L.pg,col:L.col,ind:L.ind,bru:L.bru};
           if(L.grp!=null){o.grp=L.grp;o.ims=[L.im||null];last=o}else last=null;
           lines.push(o);
         });
@@ -560,6 +569,29 @@ header.top p{margin:0;color:var(--muted);font-size:.95rem}
       if(!lines.length){say('Bu PDF\'ten metin çıkmadı. Taranmış (resim) bir PDF olabilir.',true);return}
       build(lines,file.name);
     }catch(e){say('PDF açılamadı: dosya bozuk ya da şifreli olabilir.',true)}
+  }
+  // PDF'te kalın yazılmış ifadeleri bul ve paragraflarda kalın biçim olarak işaretle
+  function bnorm(t){return t.replace(/\s+([.,;:!?’)”»])/g,'$1').replace(/([(“«])\s+/g,'$1').replace(/\s{2,}/g,' ').trim()}
+  function kalinUygula(lines,paras,title){
+    var P=[],cur=null;
+    lines.forEach(function(l){var runs=l.bru||[];
+      if(!runs.length){cur=null;return}
+      runs.forEach(function(r,k){
+        if(k===0&&r.st&&cur&&cur.open){cur.t=/-$/.test(cur.t)?cur.t.replace(/-$/,'')+r.t:cur.t+' '+r.t}
+        else{cur={t:r.t};P.push(cur)}
+        cur.open=!!r.en});
+      if(!runs[runs.length-1].en)cur=null});
+    var ti=bnorm(title||'').toLocaleLowerCase('tr'),pos={i:0,o:0},HT={};
+    paras.forEach(function(b){if(b[0]==='hitap'||b[0]==='src')HT[bnorm(b[1]).toLocaleLowerCase('tr').replace(/[^\p{L}\s]/gu,'').trim()]=1});
+    P.map(function(x){return bnorm(x.t.replace(/(^|\s)\d{1,2}(?=\s|$)/g,'$1'))}).forEach(function(ph){
+      var core=ph.replace(/^[\s“"«(]+|[\s”"»).,;:!?]+$/g,'');
+      if(core.replace(/[^\p{L}]/gu,'').length<4)return;
+      if(ti&&ph.toLocaleLowerCase('tr').indexOf(ti)>=0&&ph.length<ti.length+12)return;
+      if(HT[core.toLocaleLowerCase('tr').replace(/[^\p{L}\s]/gu,'').trim()])return;
+      for(var i=pos.i;i<paras.length;i++){var b=paras[i];if(!(b[0]==='p'||b[0]==='meal')||b[3])continue;
+        var w=ph.trim(),j=b[1].indexOf(w,i===pos.i?pos.o:0);if(j<0){w=core;j=b[1].indexOf(w,i===pos.i?pos.o:0)}if(j<0)continue;
+        var L=Array.isArray(b[2])?b[2]:[];var e=j+w.length;while(e<b[1].length&&/[.,;:!?”"’»]/.test(b[1][e]))e++;L.push({s:j,e:e,b:1});b[2]=L;pos={i:i,o:e};return}
+    });
   }
   function build(lines,name){
     var body=lines.map(function(l){return l.sz}).sort(function(a,b){return a-b})[Math.floor(lines.length/2)]||12;
@@ -614,6 +646,7 @@ header.top p{margin:0;color:var(--muted);font-size:.95rem}
       var m=b[0]==='meal'&&b[1].match(/^([“"«][^”"»]*[”"»][.,]?)\s+(\S.*)$/);
       if(m){out.push(['meal',m[1]]);out.push(['p',m[2]])}else out.push(b)});
     paras=out;
+    kalinUygula(lines,paras,title);
     H={ornek:false,title:title||name.replace(/\.pdf$/i,''),date:date,blocks:paras};
     edit();render();save();
     var n={ar:0,meal:0,hitap:0};paras.forEach(function(b){if(n[b[0]]!=null)n[b[0]]++});
