@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="utf-8">
-<meta name="panel-surum" content="19">
+<meta name="panel-surum" content="20">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex">
 <title>Kürsüden Gönüllere Hutbe Paneli</title>
@@ -245,12 +245,17 @@ header.top p{margin:0;color:var(--muted);font-size:.95rem}
       <div id="arcL" class="arcm"></div>
       <p class="status" id="arcSt" aria-live="polite"></p>
       
+      
+      
       <!--vz--><h2 style="margin-top:26px" id="vzH">Uzun Sohbet (Vaaz ve Sohbet kitapçığı)</h2>
-      <p class="note">Hutbeden hazırlanan <b>Vaaz ve Sohbet</b> kitapçığının PDF'ini seçin. Uygulamada Cuma bölümündeki "Uzun Sohbet" sayfasında kitapçık tarzında görünür; PDF'in kendisi de indirilebilir olur. Önceki sohbetler "Geçmiş sohbetler" listesinde kalır.</p>
-      <div class="row"><label class="btn" for="vz-f" style="cursor:pointer">Kitapçık PDF'ini seç</label><input id="vz-f" type="file" accept="application/pdf,.pdf" hidden><button type="button" class="btn" id="vz-pub" disabled>Uzun sohbeti gönder</button></div>
-      <p class="note" id="vz-info" hidden></p>
+      <p class="note">Hutbeden hazırlanan <b>Vaaz ve Sohbet</b> kitapçıklarının PDF'lerini seçin. <b>Birden fazla</b> seçebilirsiniz (ör. 2025'in bütün haftaları). Her kitapçığın <b>hutbe tarihi</b> (cuma günü) uygulamada hangi yılın altında görüneceğini belirler. Kitapçıkta tarih varsa kendiliğinden dolar.</p>
+      <div class="row"><label class="btn" for="vz-f" style="cursor:pointer">Kitapçık PDF'lerini seç</label><input id="vz-f" type="file" accept="application/pdf,.pdf" multiple hidden></div>
+      <div id="vz-Q" class="arcm"></div>
+      <label id="vz-yw" style="display:flex;gap:8px;align-items:center;margin-top:10px;font:600 .9rem var(--f-ui)" hidden><input id="vz-yeni" type="checkbox"> En yeni tarihli olanı <b>“bu haftanın sohbeti”</b> olarak duyur (uygulamada 7 gün <b>YENİ</b> yazar)</label>
+      <div class="row"><button type="button" class="btn" id="vz-pub" disabled>Gönder</button></div>
       <p class="status" id="vz-st" aria-live="polite"></p>
-      <div class="row"><button type="button" class="btn" id="vz-ld">Geçmiş sohbetleri getir</button></div>
+      <h3 style="margin:18px 0 4px;font:800 1rem var(--f-ui)">Yüklenmiş uzun sohbetler</h3>
+      <div class="row"><button type="button" class="btn" id="vz-ld">Listeyi getir</button></div>
       <div id="vz-L" class="arcm"></div><!--/vz-->
       <h2 style="margin-top:26px">Duyuru</h2>
       <p class="note">Uygulamayı açan herkese ana sayfanın köşesinde küçük bir kutuda bir kez gösterilir (ör. "Lütfen uygulamayı güncelleyin").</p>
@@ -830,62 +835,84 @@ header.top p{margin:0;color:var(--muted);font-size:.95rem}
       }).then(function(){btn.disabled=false});
   };
 
+
+
 /*vz*/
-  // ---- Uzun Sohbet: kitapçık PDF'ine gömülü vaaz.json -> vaaz/son.json + vaaz/arsiv + vaaz/pdf ----
+  // ---- Uzun Sohbet: kitapçık PDF'lerine gömülü vaaz.json -> vaaz/arsiv/<id>.json + vaaz/pdf/<id>.pdf + vaaz/arsiv/index.json (+ vaaz/son.json) ----
   (function(){
-    var VZ=null,VPDF=null,VB='https://dinibilgiler.github.io/kursuden-icerik/vaaz/';
+    var Q=[],VB='https://dinibilgiler.github.io/kursuden-icerik/vaaz/',AY=['ocak','şubat','mart','nisan','mayıs','haziran','temmuz','ağustos','eylül','ekim','kasım','aralık'];
     function vs(t,e){var x=$('#vz-st');x.textContent=t;x.classList.toggle('err',!!e)}
     function vok(v){return v&&typeof v.title==='string'&&v.title&&Array.isArray(v.chapters)&&v.chapters.length>0&&v.chapters.every(function(c){return c&&typeof c.title==='string'&&Array.isArray(c.blocks)})}
     function bin64(u8){var o='',n=u8.length;for(var i=0;i<n;i+=0x8000)o+=String.fromCharCode.apply(null,u8.subarray(i,i+0x8000));return btoa(o)}
     function putRaw(path,c64,msg){return gh(path).then(function(g){var body={message:msg,content:c64};if(g.ok&&g.j.sha)body.sha=g.j.sha;return gh(path,'PUT',body)}).then(function(r){if(!r.ok)throw r;return r})}
+    function okTarih(t){return /^\d{4}-\d\d-\d\d$/.test(t||'')&&!isNaN(Date.parse(t))}
+    function trTarih(t){var d=new Date(t+'T12:00:00');return d.getDate()+' '+AY[d.getMonth()].replace(/^./,function(c){return c.toLocaleUpperCase('tr')})+' '+d.getFullYear()}
+    function draw(){
+      var h='';Q.forEach(function(q,k){
+        h+='<div class="ai" data-k="'+k+'"><span class="tx"><b>'+esc(q.j?q.j.title:q.f.name)+'</b><small>'+(q.err?'<span style="color:#c0392b">'+esc(q.err)+'</span>':esc(q.j.date||'')+' · '+q.j.chapters.length+' bölüm · '+q.n+' sayfa')+'</small></span>'+
+          (q.err?'':'<label style="display:grid;gap:2px;font:700 .72rem var(--f-ui);color:var(--muted)">Hutbe tarihi<input type="date" value="'+esc(q.t||'')+'" style="min-height:36px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:0 6px"></label>')+
+          '<button type="button" class="del">Çıkar</button></div>'});
+      $('#vz-Q').innerHTML=h;
+      $('#vz-Q').querySelectorAll('.ai').forEach(function(d){var q=Q[+d.dataset.k],i=d.querySelector('input');if(i)i.onchange=function(){q.t=i.value;check()};d.querySelector('.del').onclick=function(){Q.splice(+d.dataset.k,1);draw();check()}});
+      check();
+    }
+    function check(){var ok=Q.filter(function(q){return !q.err});var eksik=ok.filter(function(q){return !okTarih(q.t)}).length;
+      $('#vz-pub').disabled=!ok.length||eksik>0;$('#vz-yw').hidden=!ok.length;
+      if(ok.length){var son=ok.map(function(q){return q.t||''}).sort().pop();var yakin=okTarih(son)&&Math.abs(Date.now()-Date.parse(son))<14*864e5;if(!$('#vz-yeni').dataset.el)$('#vz-yeni').checked=yakin}
+      vs(!Q.length?'':eksik?eksik+' kitapçığın hutbe tarihini girin.':ok.length+' kitapçık gönderilmeye hazır.',eksik>0)}
+    $('#vz-yeni').onchange=function(){this.dataset.el='1'};
     $('#vz-f').onchange=async function(){
-      var f=this.files&&this.files[0];VZ=null;VPDF=null;$('#vz-pub').disabled=true;$('#vz-info').hidden=true;if(!f)return;
+      var fs=[].slice.call(this.files||[]);this.value='';if(!fs.length)return;
       if(!window.pdfjsLib){vs('PDF okuyucu yüklenemedi. Sayfayı yenileyip tekrar deneyin.',true);return}
-      if(f.size>20*1024*1024){vs('Dosya çok büyük (en çok 20 MB).',true);return}
-      vs('PDF okunuyor…');
-      try{
-        var buf=await f.arrayBuffer();VPDF=new Uint8Array(buf.slice(0));
-        var doc=await pdfjsLib.getDocument({data:buf}).promise,at=await doc.getAttachments(),it=null;
-        if(at)(at instanceof Map?Array.from(at.entries()):Object.keys(at).map(function(k){return[k,at[k]]})).forEach(function(e){var a=e[1];if(a&&a.content&&/vaaz\.json$/i.test(a.filename||e[0]))it=a});
-        if(!it){vs('Bu PDF\'te sohbet verisi yok. Kitapçığı yeni sürümle (içine veri gömülü olarak) hazırlatıp tekrar deneyin.',true);VPDF=null;return}
-        var j=JSON.parse(new TextDecoder('utf-8').decode(it.content));
-        if(!vok(j)){vs('PDF\'teki sohbet verisi bozuk.',true);VPDF=null;return}
-        VZ=j;var kn=0;j.chapters.forEach(function(c){c.blocks.forEach(function(b){if(b&&typeof b==='object'&&(b.ar||b.ari))kn++})});
-        var i=$('#vz-info');i.hidden=false;i.innerHTML='<b>'+esc(j.title)+'</b>'+(j.subtitle?' – '+esc(j.subtitle):'')+'<br>'+esc(j.date||'')+' · '+j.chapters.length+' bölüm · '+kn+' ayet/hadis kutusu · '+((j.sources||[]).length)+' kaynak · '+doc.numPages+' sayfa';
-        $('#vz-pub').disabled=false;vs('Hazır. "Uzun sohbeti gönder"e basın.');
-      }catch(e){vs('PDF okunamadı. Dosyayı kontrol edip tekrar deneyin.',true);VPDF=null}
+      for(var f of fs){var q={f:f};Q.push(q);vs('Okunuyor: '+f.name);
+        try{
+          if(f.size>20*1024*1024)throw 'Dosya çok büyük (en çok 20 MB).';
+          var buf=await f.arrayBuffer();q.pdf=new Uint8Array(buf.slice(0));
+          var doc=await pdfjsLib.getDocument({data:buf}).promise,at=await doc.getAttachments(),it=null;q.n=doc.numPages;
+          if(at)(at instanceof Map?Array.from(at.entries()):Object.keys(at).map(function(k){return[k,at[k]]})).forEach(function(e){var a=e[1];if(a&&a.content&&/vaaz\.json$/i.test(a.filename||e[0]))it=a});
+          if(!it)throw 'Bu PDF\'te sohbet verisi yok (eski kitapçık). Yeni sürümle hazırlatın.';
+          var j=JSON.parse(new TextDecoder('utf-8').decode(it.content));if(!vok(j))throw 'Sohbet verisi bozuk.';
+          q.j=j;q.t=okTarih(j.tarih)?j.tarih:'';
+        }catch(e){q.err=typeof e==='string'?e:'PDF okunamadı.';q.pdf=null}
+      }
+      draw();
     };
     $('#vz-pub').onclick=async function(){
-      if(!VZ||!VPDF)return;
+      var L0=Q.filter(function(q){return !q.err&&okTarih(q.t)});if(!L0.length)return;
       if(!tok()){$('#tokBox').hidden=false;vs('Önce erişim anahtarını girin.',true);return}
       var btn=this;btn.disabled=true;
       try{
-        var now=new Date(),id=/^[a-z0-9-]{3,60}$/.test(VZ.id||'')?VZ.id:(now.toISOString().slice(0,7)+'-'+slug(VZ.title));
-        var J=Object.assign({},VZ,{id:id,v:now.toISOString(),pdf:VB+'pdf/'+id+'.pdf'}),T=JSON.stringify(J);
-        vs('PDF gönderiliyor…');await putRaw('vaaz/pdf/'+id+'.pdf',bin64(VPDF),'Kitapçık: '+VZ.title);
-        vs('Sohbet gönderiliyor…');await put('vaaz/arsiv/'+id+'.json',T,'Uzun sohbet arşivi: '+VZ.title);
-        await put('vaaz/son.json',T,'Uzun sohbet: '+VZ.title);
         var L=[],g=await gh('vaaz/arsiv/index.json');if(g.ok&&g.j.content){try{L=JSON.parse(ub64(g.j.content))||[]}catch(e){L=[]}}
-        L=L.filter(function(x){return x&&x.id!==id});L.unshift({id:id,title:J.title,subtitle:J.subtitle||'',date:J.date||'',v:J.v});
-        await put('vaaz/arsiv/index.json',JSON.stringify(L.slice(0,300)),'Uzun sohbet listesi');
-        vs('Gönderildi. Telefonlarda birkaç dakika içinde görünür.');
-      }catch(r){var st=r&&r.st;vs(st===401?'Anahtar geçersiz ya da süresi dolmuş.':st===403||st===404?'Anahtarın bu depoya yazma izni yok.':st===413||st===422?'Dosya gönderilemedi (çok büyük olabilir).':'Gönderilemedi. İnternet bağlantısını kontrol edip tekrar deneyin.',true)}
-      btn.disabled=false;
+        var duyur=$('#vz-yeni').checked,enYeni=L0.map(function(q){return q.t}).sort().pop(),now=new Date().toISOString(),say=0;
+        for(var q of L0){
+          var id=q.t+'-'+slug(q.j.title),yil=+q.t.slice(0,4);
+          var J=Object.assign({},q.j,{id:id,tarih:q.t,yil:yil,v:now,pdf:VB+'pdf/'+id+'.pdf'});if(!J.date)J.date=trTarih(q.t);
+          var T=JSON.stringify(J);say++;
+          vs('('+say+'/'+L0.length+') '+J.title+': PDF gönderiliyor…');await putRaw('vaaz/pdf/'+id+'.pdf',bin64(q.pdf),'Kitapçık: '+J.title+' ('+q.t+')');
+          vs('('+say+'/'+L0.length+') '+J.title+': sohbet gönderiliyor…');await put('vaaz/arsiv/'+id+'.json',T,'Uzun sohbet: '+J.title+' ('+q.t+')');
+          var e={id:id,title:J.title,subtitle:J.subtitle||'',date:J.date||'',tarih:q.t,yil:yil,v:now};
+          if(duyur&&q.t===enYeni){e.yeni=now;await put('vaaz/son.json',T,'Bu haftanın uzun sohbeti: '+J.title)}
+          L=L.filter(function(x){return x&&x.id!==id&&!(x.tarih===q.t&&x.title===J.title)});L.push(e);
+        }
+        L.sort(function(a,b){var x=String(a.tarih||a.id),y=String(b.tarih||b.id);return x<y?1:x>y?-1:0});
+        await put('vaaz/arsiv/index.json',JSON.stringify(L.slice(0,600)),'Uzun sohbet listesi');
+        Q=[];draw();vs(say+' sohbet gönderildi. Telefonlarda birkaç dakika içinde görünür.');
+      }catch(r){var st=r&&r.st;vs(st===401?'Anahtar geçersiz ya da süresi dolmuş.':st===403||st===404?'Anahtarın bu depoya yazma izni yok.':st===413||st===422?'Dosya gönderilemedi (çok büyük olabilir).':'Gönderilemedi. İnternet bağlantısını kontrol edip tekrar deneyin. Gönderilenler kaydedildi; kalanları yeniden seçin.',true)}
+      btn.disabled=false;check();
     };
-    // geçmiş uzun sohbetler: listele / sil
-    var VL=[],VCUR=null;
-    function vdraw(){var h='';VL.forEach(function(x,k){var cur=VCUR&&x.id===VCUR;
-        h+='<div class="ai" data-k="'+k+'"><span class="tx"><b>'+esc(x.title||x.id)+'</b><small>'+esc(x.date||'')+' · '+esc(x.id)+'</small></span>'+(cur?'<span class="cur">Güncel</span>':'<button type="button" class="del">Sil</button>')+'</div>'});
+    // yüklenmiş uzun sohbetler: yıllara göre liste / sil
+    var VL=[];
+    function vdraw(){var h='',yy=null;VL.forEach(function(x,k){var y=x.yil||String(x.tarih||x.id).slice(0,4);
+        if(y!==yy){yy=y;h+='<div style="font:800 .85rem var(--f-ui);color:var(--muted);margin-top:6px">'+esc(String(y))+'</div>'}
+        h+='<div class="ai" data-k="'+k+'"><span class="tx"><b>'+esc(x.title||x.id)+(x.yeni?' <small style="color:#c40000">· bu haftanın</small>':'')+'</b><small>'+esc(x.tarih?trTarih(x.tarih):(x.date||''))+' · '+esc(x.id)+'</small></span><button type="button" class="del">Sil</button></div>'});
       $('#vz-L').innerHTML=h||'<p class="note">Listede sohbet yok.</p>';
-      $('#vz-L').querySelectorAll('.ai').forEach(function(d){var b=d.querySelector('.del');if(!b)return;
+      $('#vz-L').querySelectorAll('.ai').forEach(function(d){var b=d.querySelector('.del');
         b.onclick=function(){if(d.querySelector('.yes'))return;b.hidden=true;d.insertAdjacentHTML('beforeend','<button type="button" class="yes">Evet, sil</button><button type="button" class="no">Vazgeç</button>');
           d.querySelector('.no').onclick=vdraw;d.querySelector('.yes').onclick=function(){vdel(+d.dataset.k)}}})}
     $('#vz-ld').onclick=async function(){
       if(!tok()){$('#tokBox').hidden=false;vs('Önce erişim anahtarını girin.',true);return}
       vs('Liste alınıyor…');
       try{var g=await gh('vaaz/arsiv/index.json');VL=[];if(g.ok&&g.j.content){try{VL=JSON.parse(ub64(g.j.content))||[]}catch(e){}}else if(g.st===401){vs('Erişim anahtarı geçersiz.',true);return}
-        var sj=await gh('vaaz/son.json');VCUR=null;
-        if(sj.ok){try{var raw=sj.j.content?ub64(sj.j.content):await (await fetch(VB+'son.json?t='+Date.now())).text();VCUR=JSON.parse(raw).id}catch(e){}}
         vdraw();vs(VL.length+' sohbet')}catch(e){vs('Liste alınamadı.',true)}
     };
     async function vdel(k){var x=VL[k];if(!x)return;vs('Siliniyor…');
