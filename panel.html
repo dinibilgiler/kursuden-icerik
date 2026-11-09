@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="utf-8">
-<meta name="panel-surum" content="17">
+<meta name="panel-surum" content="19">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex">
 <title>Kürsüden Gönüllere Hutbe Paneli</title>
@@ -244,6 +244,14 @@ header.top p{margin:0;color:var(--muted);font-size:.95rem}
       <div class="row"><button type="button" class="btn" id="arcLd">Listeyi getir</button></div>
       <div id="arcL" class="arcm"></div>
       <p class="status" id="arcSt" aria-live="polite"></p>
+      
+      <!--vz--><h2 style="margin-top:26px" id="vzH">Uzun Sohbet (Vaaz ve Sohbet kitapçığı)</h2>
+      <p class="note">Hutbeden hazırlanan <b>Vaaz ve Sohbet</b> kitapçığının PDF'ini seçin. Uygulamada Cuma bölümündeki "Uzun Sohbet" sayfasında kitapçık tarzında görünür; PDF'in kendisi de indirilebilir olur. Önceki sohbetler "Geçmiş sohbetler" listesinde kalır.</p>
+      <div class="row"><label class="btn" for="vz-f" style="cursor:pointer">Kitapçık PDF'ini seç</label><input id="vz-f" type="file" accept="application/pdf,.pdf" hidden><button type="button" class="btn" id="vz-pub" disabled>Uzun sohbeti gönder</button></div>
+      <p class="note" id="vz-info" hidden></p>
+      <p class="status" id="vz-st" aria-live="polite"></p>
+      <div class="row"><button type="button" class="btn" id="vz-ld">Geçmiş sohbetleri getir</button></div>
+      <div id="vz-L" class="arcm"></div><!--/vz-->
       <h2 style="margin-top:26px">Duyuru</h2>
       <p class="note">Uygulamayı açan herkese ana sayfanın köşesinde küçük bir kutuda bir kez gösterilir (ör. "Lütfen uygulamayı güncelleyin").</p>
       <label for="d-txt" style="display:grid;gap:4px;font:700 .8rem var(--f-ui);color:var(--muted)">Duyuru metni (en çok 200 harf)
@@ -821,6 +829,71 @@ header.top p{margin:0;color:var(--muted);font-size:.95rem}
              'Gönderilemedi. İnternet bağlantısını kontrol edip tekrar deneyin.',true);
       }).then(function(){btn.disabled=false});
   };
+
+/*vz*/
+  // ---- Uzun Sohbet: kitapçık PDF'ine gömülü vaaz.json -> vaaz/son.json + vaaz/arsiv + vaaz/pdf ----
+  (function(){
+    var VZ=null,VPDF=null,VB='https://dinibilgiler.github.io/kursuden-icerik/vaaz/';
+    function vs(t,e){var x=$('#vz-st');x.textContent=t;x.classList.toggle('err',!!e)}
+    function vok(v){return v&&typeof v.title==='string'&&v.title&&Array.isArray(v.chapters)&&v.chapters.length>0&&v.chapters.every(function(c){return c&&typeof c.title==='string'&&Array.isArray(c.blocks)})}
+    function bin64(u8){var o='',n=u8.length;for(var i=0;i<n;i+=0x8000)o+=String.fromCharCode.apply(null,u8.subarray(i,i+0x8000));return btoa(o)}
+    function putRaw(path,c64,msg){return gh(path).then(function(g){var body={message:msg,content:c64};if(g.ok&&g.j.sha)body.sha=g.j.sha;return gh(path,'PUT',body)}).then(function(r){if(!r.ok)throw r;return r})}
+    $('#vz-f').onchange=async function(){
+      var f=this.files&&this.files[0];VZ=null;VPDF=null;$('#vz-pub').disabled=true;$('#vz-info').hidden=true;if(!f)return;
+      if(!window.pdfjsLib){vs('PDF okuyucu yüklenemedi. Sayfayı yenileyip tekrar deneyin.',true);return}
+      if(f.size>20*1024*1024){vs('Dosya çok büyük (en çok 20 MB).',true);return}
+      vs('PDF okunuyor…');
+      try{
+        var buf=await f.arrayBuffer();VPDF=new Uint8Array(buf.slice(0));
+        var doc=await pdfjsLib.getDocument({data:buf}).promise,at=await doc.getAttachments(),it=null;
+        if(at)(at instanceof Map?Array.from(at.entries()):Object.keys(at).map(function(k){return[k,at[k]]})).forEach(function(e){var a=e[1];if(a&&a.content&&/vaaz\.json$/i.test(a.filename||e[0]))it=a});
+        if(!it){vs('Bu PDF\'te sohbet verisi yok. Kitapçığı yeni sürümle (içine veri gömülü olarak) hazırlatıp tekrar deneyin.',true);VPDF=null;return}
+        var j=JSON.parse(new TextDecoder('utf-8').decode(it.content));
+        if(!vok(j)){vs('PDF\'teki sohbet verisi bozuk.',true);VPDF=null;return}
+        VZ=j;var kn=0;j.chapters.forEach(function(c){c.blocks.forEach(function(b){if(b&&typeof b==='object'&&(b.ar||b.ari))kn++})});
+        var i=$('#vz-info');i.hidden=false;i.innerHTML='<b>'+esc(j.title)+'</b>'+(j.subtitle?' – '+esc(j.subtitle):'')+'<br>'+esc(j.date||'')+' · '+j.chapters.length+' bölüm · '+kn+' ayet/hadis kutusu · '+((j.sources||[]).length)+' kaynak · '+doc.numPages+' sayfa';
+        $('#vz-pub').disabled=false;vs('Hazır. "Uzun sohbeti gönder"e basın.');
+      }catch(e){vs('PDF okunamadı. Dosyayı kontrol edip tekrar deneyin.',true);VPDF=null}
+    };
+    $('#vz-pub').onclick=async function(){
+      if(!VZ||!VPDF)return;
+      if(!tok()){$('#tokBox').hidden=false;vs('Önce erişim anahtarını girin.',true);return}
+      var btn=this;btn.disabled=true;
+      try{
+        var now=new Date(),id=/^[a-z0-9-]{3,60}$/.test(VZ.id||'')?VZ.id:(now.toISOString().slice(0,7)+'-'+slug(VZ.title));
+        var J=Object.assign({},VZ,{id:id,v:now.toISOString(),pdf:VB+'pdf/'+id+'.pdf'}),T=JSON.stringify(J);
+        vs('PDF gönderiliyor…');await putRaw('vaaz/pdf/'+id+'.pdf',bin64(VPDF),'Kitapçık: '+VZ.title);
+        vs('Sohbet gönderiliyor…');await put('vaaz/arsiv/'+id+'.json',T,'Uzun sohbet arşivi: '+VZ.title);
+        await put('vaaz/son.json',T,'Uzun sohbet: '+VZ.title);
+        var L=[],g=await gh('vaaz/arsiv/index.json');if(g.ok&&g.j.content){try{L=JSON.parse(ub64(g.j.content))||[]}catch(e){L=[]}}
+        L=L.filter(function(x){return x&&x.id!==id});L.unshift({id:id,title:J.title,subtitle:J.subtitle||'',date:J.date||'',v:J.v});
+        await put('vaaz/arsiv/index.json',JSON.stringify(L.slice(0,300)),'Uzun sohbet listesi');
+        vs('Gönderildi. Telefonlarda birkaç dakika içinde görünür.');
+      }catch(r){var st=r&&r.st;vs(st===401?'Anahtar geçersiz ya da süresi dolmuş.':st===403||st===404?'Anahtarın bu depoya yazma izni yok.':st===413||st===422?'Dosya gönderilemedi (çok büyük olabilir).':'Gönderilemedi. İnternet bağlantısını kontrol edip tekrar deneyin.',true)}
+      btn.disabled=false;
+    };
+    // geçmiş uzun sohbetler: listele / sil
+    var VL=[],VCUR=null;
+    function vdraw(){var h='';VL.forEach(function(x,k){var cur=VCUR&&x.id===VCUR;
+        h+='<div class="ai" data-k="'+k+'"><span class="tx"><b>'+esc(x.title||x.id)+'</b><small>'+esc(x.date||'')+' · '+esc(x.id)+'</small></span>'+(cur?'<span class="cur">Güncel</span>':'<button type="button" class="del">Sil</button>')+'</div>'});
+      $('#vz-L').innerHTML=h||'<p class="note">Listede sohbet yok.</p>';
+      $('#vz-L').querySelectorAll('.ai').forEach(function(d){var b=d.querySelector('.del');if(!b)return;
+        b.onclick=function(){if(d.querySelector('.yes'))return;b.hidden=true;d.insertAdjacentHTML('beforeend','<button type="button" class="yes">Evet, sil</button><button type="button" class="no">Vazgeç</button>');
+          d.querySelector('.no').onclick=vdraw;d.querySelector('.yes').onclick=function(){vdel(+d.dataset.k)}}})}
+    $('#vz-ld').onclick=async function(){
+      if(!tok()){$('#tokBox').hidden=false;vs('Önce erişim anahtarını girin.',true);return}
+      vs('Liste alınıyor…');
+      try{var g=await gh('vaaz/arsiv/index.json');VL=[];if(g.ok&&g.j.content){try{VL=JSON.parse(ub64(g.j.content))||[]}catch(e){}}else if(g.st===401){vs('Erişim anahtarı geçersiz.',true);return}
+        var sj=await gh('vaaz/son.json');VCUR=null;
+        if(sj.ok){try{var raw=sj.j.content?ub64(sj.j.content):await (await fetch(VB+'son.json?t='+Date.now())).text();VCUR=JSON.parse(raw).id}catch(e){}}
+        vdraw();vs(VL.length+' sohbet')}catch(e){vs('Liste alınamadı.',true)}
+    };
+    async function vdel(k){var x=VL[k];if(!x)return;vs('Siliniyor…');
+      try{for(var pth of ['vaaz/arsiv/'+x.id+'.json','vaaz/pdf/'+x.id+'.pdf']){var g=await gh(pth);if(g.ok&&g.j.sha){var r=await gh(pth,'DELETE',{message:'Sil: '+(x.title||x.id),sha:g.j.sha});if(!r.ok&&r.st!==404)throw r}}
+        VL.splice(k,1);await put('vaaz/arsiv/index.json',JSON.stringify(VL),'Uzun sohbet listesi');vdraw();vs('Silindi.')}
+      catch(e){vs('Silinemedi. Tekrar deneyin.',true);vdraw()}}
+  })();
+  /*/vz*/
   $('#v-pub').onclick=function(){
     var vc=parseInt($('#v-vc').value,10),vn=$('#v-vn').value.trim(),st=$('#v-st');
     function vs(t,e){st.textContent=t;st.classList.toggle('err',!!e)}
