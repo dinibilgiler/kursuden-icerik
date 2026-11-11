@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="utf-8">
-<meta name="panel-surum" content="32">
+<meta name="panel-surum" content="33">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex">
 <title>Kürsüden Gönüllere Hutbe Paneli</title>
@@ -262,6 +262,7 @@ body.pzB{padding-bottom:84px}
       <div class="row"><button type="button" class="btn" id="arcLd">Listeyi getir</button></div>
       <div id="arcL" class="arcm"></div>
       <p class="status" id="arcSt" aria-live="polite"></p>
+      
       
       
       
@@ -871,6 +872,7 @@ body.pzB{padding-bottom:84px}
 
 
 
+
 /*mn*/
   (function(){
     function ms(t,e){var x=$('#mn-st');x.textContent=t;x.classList.toggle('err',!!e)}
@@ -885,8 +887,8 @@ body.pzB{padding-bottom:84px}
     $('#mn-ld').onclick=function(){ms('Alınıyor…');getir(false)};
     $('#mn-pub').onclick=async function(){if(!tok()){$('#tokBox').hidden=false;ms('Önce erişim anahtarını girin.',true);return}
       var v=secili();if(!v){ms('Bir düzen seçin.',true);return}
-      ms('Kaydediliyor…');try{await getir(true);var o=Object.assign({},J,{menu:v,v:new Date().toISOString()});await put('ayarlar.json',JSON.stringify(o),'Menü düzeni: '+v);
-        ms('Kaydedildi. Telefonlarda uygulama bir sonraki açılışta bu düzenle gelir.')}catch(r){ms(r&&r.st===401?'Anahtar geçersiz.':'Kaydedilemedi.',true)}};
+      ms('Kaydediliyor…');try{await getir(true);var o=Object.assign({},J,{menu:v,v:new Date().toISOString()});await put('ayarlar.json',JSON.stringify(o),'Menü düzeni: '+v);try{localStorage.setItem('uz_ayar',JSON.stringify(o))}catch(e){}
+        ms('Kaydedildi. Bu telefonda hemen, diğer telefonlarda 1-2 dakika içinde uygulama açılınca bu düzen gelir.')}catch(r){ms(r&&r.st===401?'Anahtar geçersiz.':'Kaydedilemedi.',true)}};
     isaretle('3');setTimeout(function(){getir(true)},800);
   })();
   /*/mn*/
