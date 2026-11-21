@@ -1,0 +1,58 @@
+# Google Play'de yeni sürüm yayına girince kullanıcılara otomatik bildirim gönderir.
+# 3 saatte bir Play sayfasındaki sürümü okur; yeni bir sürüm görürse bildirim.txt'ye
+# "Kürsüden Gönüllere yenilendi" satırı ekler (72 saat geçerli, dokununca mağaza açılır).
+# İlk çalışmada yalnız mevcut sürümü kaydeder, bildirim göndermez.
+# Elle denemek için: Actions > "Play sürüm kontrolü" > Run workflow
+name: Play sürüm kontrolü
+on:
+  schedule:
+    - cron: '17 */3 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: surum-kontrol
+  cancel-in-progress: false
+jobs:
+  kontrol:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Play'deki sürümü oku, yeniyse bildirim ekle run: | python3 - <<'PY' import re, time, urllib.request, os, sys URL = 'https://play.google.com/store/apps/details?id=com.kursudengonullere&hl=tr&gl=TR'
+          req = urllib.request.Request(URL, headers={'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36', 'Accept-Language': 'tr-TR,tr;q=0.9'})
+          try:
+              html = urllib.request.urlopen(req, timeout=30).read().decode('utf-8', 'ignore')
+          except Exception as e:
+              print('Play sayfası açılamadı:', e); sys.exit(0)
+          bul = re.findall(r'\[\[\["(\d+(?:\.\d+){1,3})"\]\]', html)
+          if not bul:
+              bul = re.findall(r'"softwareVersion"\s*:\s*"(\d+(?:\.\d+){1,3})"', html)
+          if not bul:
+              print('Sürüm bulunamadı (sayfa yapısı değişmiş olabilir).'); sys.exit(0)
+          v = bul[0]
+          tup = lambda x: tuple(int(p) for p in x.split('.'))
+          print('Play sürümü:', v)
+          eski = open('surum_play.txt').read().strip() if os.path.exists('surum_play.txt') else ''
+          if not eski:
+              open('surum_play.txt', 'w').write(v + '\n'); print('İlk kayıt; bildirim gönderilmedi.'); sys.exit(0)
+          if tup(v) <= tup(eski):
+              print('Yeni sürüm yok (kayıtlı:', eski + ')'); sys.exit(0)
+          now = int(time.time() * 1000)
+          L = [l.rstrip('\n') for l in open('bildirim.txt', encoding='utf-8')] if os.path.exists('bildirim.txt') else []
+          L = [l for l in L if l.strip() and not l.startswith('u-a' + v + '|')]
+          L = [l for l in L if len(l.split('|')) < 4 or not l.split('|')[3].isdigit() or int(l.split('|')[3]) > now]
+          L.append('|'.join(['u-a' + v, 'guncelleme', str(now), str(now + 72 * 3600 * 1000), 'Kürsüden Gönüllere yenilendi',
+                             'Sürüm ' + v + ' yayında: yeni özellikler ve düzeltmeler. Güncellemek için dokunun.', 'index.html#guncelle']))
+          open('bildirim.txt', 'w', encoding='utf-8').write('\n'.join(L) + '\n')
+          open('surum_play.txt', 'w').write(v + '\n')
+          print('Bildirim eklendi:', v)
+          PY
+      - name: Değişiklik varsa kaydet
+        run: |
+          git config user.name "surum-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add bildirim.txt surum_play.txt 2>/dev/null || true
+          if git diff --cached --quiet; then echo "Değişiklik yok"; exit 0; fi
+          git commit -m "Play sürümü: $(cat surum_play.txt)"
+          for i in 1 2 3; do git pull --rebase -q && git push && exit 0; sleep 5; done
+          exit 1
