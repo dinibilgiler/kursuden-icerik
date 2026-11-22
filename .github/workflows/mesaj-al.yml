@@ -1,0 +1,57 @@
+# "Bize yazın" mesajlarını saatte bir ntfy.sh'den alır, şifreli hâliyle mesajlar.jsonl'e ekler.
+# Mesajlar uygulamada şifrelenir; yalnız yönetim panelinde mesaj parolasıyla okunur.
+# ntfy.sh mesajları 12 saat tutar; iş akışı saatte bir çalıştığı için kayıp olmaz.
+name: Mesajları al
+on:
+  schedule:
+    - cron: '23 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: mesaj-al
+  cancel-in-progress: false
+jobs:
+  al:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Yeni mesajları ekle
+        run: |
+          python3 - <<'PY'
+          import json, os, urllib.request
+          TOPIC = 'kg-msg-jet3fmp2qtrcxu'
+          son = open('mesaj_son.txt').read().strip() if os.path.exists('mesaj_son.txt') else 'all'
+          url = 'https://ntfy.sh/%s/json?poll=1&since=%s' % (TOPIC, son or 'all')
+          try:
+              raw = urllib.request.urlopen(urllib.request.Request(url, headers={'User-Agent': 'kursuden-mesaj'}), timeout=30).read().decode('utf-8', 'ignore')
+          except Exception as e:
+              print('ntfy açılamadı:', e); raise SystemExit(0)
+          var = set()
+          if os.path.exists('mesajlar.jsonl'):
+              for l in open('mesajlar.jsonl', encoding='utf-8'):
+                  try: var.add(json.loads(l)['id'])
+                  except Exception: pass
+          yeni = []; sonid = son
+          for l in raw.splitlines():
+              try: e = json.loads(l)
+              except Exception: continue
+              if e.get('event') != 'message': continue
+              sonid = e['id']; m = e.get('message', '')
+              if e['id'] in var or not m.startswith('k1.') or len(m) > 6000: continue
+              yeni.append({'id': e['id'], 't': e.get('time', 0), 'm': m})
+          if yeni:
+              with open('mesajlar.jsonl', 'a', encoding='utf-8') as f:
+                  for y in yeni: f.write(json.dumps(y) + '\n')
+          if sonid and sonid != son: open('mesaj_son.txt', 'w').write(sonid + '\n')
+          print('Yeni mesaj:', len(yeni))
+          PY
+      - name: Kaydet
+        run: |
+          git config user.name "mesaj-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add mesajlar.jsonl mesaj_son.txt 2>/dev/null || true
+          if git diff --cached --quiet; then echo "Değişiklik yok"; exit 0; fi
+          git commit -m "Yeni mesajlar"
+          for i in 1 2 3; do git pull --rebase -q && git push && exit 0; sleep 5; done
+          exit 1
