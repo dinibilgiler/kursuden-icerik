@@ -1,4 +1,3 @@
-g-2026-11-21|gunluk|1795235400000|1795287600000|Günün Sohbeti|Bugünkü sohbetiniz hazır: bir âyet, bir hadis, bir kıssa ve bir dua. Kaldığınız yerden devam edin.|sabah.html#devam
 g-2026-11-22|gunluk|1795321800000|1795374000000|Günün Sohbeti|Bugünkü sohbetiniz hazır: bir âyet, bir hadis, bir kıssa ve bir dua. Kaldığınız yerden devam edin.|sabah.html#devam
 g-2026-11-23|gunluk|1795408200000|1795460400000|Günün Sohbeti|Bugünkü sohbetiniz hazır: bir âyet, bir hadis, bir kıssa ve bir dua. Kaldığınız yerden devam edin.|sabah.html#devam
 e-2026-11-23|ezber|1795455000000|1795465800000|Ezber Kartları|Bu akşam kısa bir dua ezberlemeye ne dersiniz? Kartınız hazır.|index.html#ezber
@@ -202,3 +201,4 @@ e-2027-3-22|ezber|1805736600000|1805747400000|Ezber Kartları|Bu akşam kısa bi
 t-2027-3-26|test|1806073200000|1806093000000|Haftanın testi hazır|Bu haftanın sohbetlerinden 5 soru. Kaç doğru yapacaksınız?|index.html#test
 k1-2027-05-16|kandil|1810371600000|1810411200000|Yarın Kurban Bayramı|Yarın Kurban Bayramı. Bayram sohbetini okuyabilirsiniz.|kandil.html#kandil-8
 k2-2027-05-16|kandil|1810443600000|1810490400000|Kurban Bayramı|Hayırlı bayramlar! Bayram sohbeti hazır.|kandil.html#kandil-8
+u-a13.6|guncelleme|1795310352554|1795569552554|Kürsüden Gönüllere yenilendi|Sürüm 13.6 yayında: yeni özellikler ve düzeltmeler. Güncellemek için dokunun.|index.html#guncelle
