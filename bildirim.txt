@@ -1,7 +1,7 @@
-g-2026-11-26|gunluk|1795667400000|1795719600000|Günün Sohbeti|Bugünkü sohbetiniz hazır: bir âyet, bir hadis, bir kıssa ve bir dua. Kaldığınız yerden devam edin.|sabah.html#devam
 h-2026-11-26-yetim|hutbe|1795695719601|1795825319601|Yeni Cuma hutbesi|Yetim · Büyük yazıyla okuyun, dinleyin.|hutbe.html
 g-2026-11-27|gunluk|1795753800000|1795806000000|Günün Sohbeti|Bugünkü sohbetiniz hazır: bir âyet, bir hadis, bir kıssa ve bir dua. Kaldığınız yerden devam edin.|sabah.html#devam
 hc-2026-11-27|hutbe|1795761000000|1795775400000|Hayırlı Cumalar|Bu haftanın hutbesi: Yetim|hutbe.html
+v-2026-11-27-yetim|vaaz|1795770780076|1795943580076|Yeni uzun sohbet: Yetim|Toplumun Merhametine Emanet · Okumak için dokunun.|vaaz.html#s-2026-11-27-yetim
 t-2026-11-27|test|1795791600000|1795811400000|Haftanın testi hazır|Bu haftanın sohbetlerinden 5 soru. Kaç doğru yapacaksınız?|index.html#test
 e-2026-11-27|ezber|1795800600000|1795811400000|Ezber Kartları|Ezberlediklerinizi tekrar edin; tekrar, ezberi kalıcı kılar.|index.html#ezber
 g-2026-11-28|gunluk|1795840200000|1795892400000|Günün Sohbeti|Bugünkü sohbetiniz hazır: bir âyet, bir hadis, bir kıssa ve bir dua. Kaldığınız yerden devam edin.|sabah.html#devam
